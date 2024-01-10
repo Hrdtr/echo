@@ -1,0 +1,94 @@
+{
+  "name": "echo",
+  "type": "module",
+  "version": "1.0.0-alpha.0",
+  "description": "Open-source secure remote host management",
+  "author": {
+    "name": "Herdi Tr.",
+    "email": "iam@icm.hrdtr.dev",
+    "url": "https://www.hrdtr.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hrdtr/echo.git"
+  },
+  "main": "lib/electron/main.mjs",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "pnpm deps:rebuild:better-sqlite3 && nuxt dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "release": "pnpm dlx changelogen@latest --release --push",
+    "postinstall": "pnpm init:husky && nuxt prepare",
+    "db:generate": "drizzle-kit generate:sqlite",
+    "deps:check": "pnpx npm-check-updates -ui",
+    "deps:rebuild:better-sqlite3": "cd node_modules/better-sqlite3 && pnpm run-script install",
+    "init:husky": "husky install && husky set .husky/pre-commit \"pnpm lint-staged\" && husky set .husky/commit-msg  \"pnpm dlx commitlint --edit ${1}\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.2.2",
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.6.1",
+    "@commitlint/config-conventional": "^18.4.4",
+    "@commitlint/types": "^18.4.3",
+    "@nuxt/devtools": "latest",
+    "@nuxt/ui": "^2.11.1",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/ssh2": "^1.11.18",
+    "@types/sshpk": "^1.17.4",
+    "@types/utf8": "^3.0.3",
+    "@xterm/addon-fit": "0.9.0-beta.1",
+    "@xterm/addon-web-links": "0.10.0-beta.1",
+    "@xterm/addon-webgl": "0.17.0-beta.1",
+    "concurrently": "^8.2.2",
+    "drizzle-kit": "^0.20.9",
+    "drizzle-orm": "^0.29.3",
+    "drizzle-zod": "^0.5.1",
+    "electron": "^28.1.1",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "fuse": "^0.9.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "nuxt": "^3.9.0",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "ssh2": "^1.15.0",
+    "sshpk": "^1.18.0",
+    "utf8": "^3.0.0",
+    "vue": "^3.4.3",
+    "vue-router": "^4.2.5",
+    "xterm": "^5.3.0",
+    "zod": "^3.22.4"
+  },
+  "lint-staged": {
+    "**/*.{ts,js,mjs,vue,html,json,yml}": [
+      "pnpm lint:fix"
+    ]
+  },
+  "build": {
+    "appId": "dev.hrdtr.echo",
+    "productName": "Echo",
+    "artifactName": "echo-${version}.${ext}",
+    "npmRebuild": false,
+    "directories": {
+      "output": "artifacts/app/${version}/${platform}/${arch}"
+    },
+    "extraResources": [
+      ".output/**"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "category": "Development",
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ]
+    }
+  }
+}
