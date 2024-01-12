@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.0-alpha.3
+
+[compare changes](https://github.com/Hrdtr/echo/compare/v1.0.0-alpha.2...v1.0.0-alpha.3)
+
+### 🩹 Fixes
+
+- Ui unresponsive while selecting group inside host form ([361e705](https://github.com/Hrdtr/echo/commit/361e705))
+
+### ❤️ Contributors
+
+- Herdi Tr <iam@icm.hrdtr.dev>
+
 ## v1.0.0-alpha.2
 
 [compare changes](https://github.com/Hrdtr/echo/compare/v1.0.0-alpha.1...v1.0.0-alpha.2)
