@@ -5,11 +5,9 @@ const { data, state } = useConfirmationDialog()
 <template>
   <UModal v-model="state.visible">
     <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
-      <template #header>
-        <h2 class="text-lg font-semibold">
-          {{ data.title }}
-        </h2>
-      </template>
+      <h2 class="text-lg font-semibold">
+        {{ data.title }}
+      </h2>
       <p class="opacity-85">
         {{ data.description }}
       </p>

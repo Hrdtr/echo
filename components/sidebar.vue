@@ -5,6 +5,11 @@ const mobileSidebarVisible = useState('mobile-sidebar-visible', () => false)
 const activeView = useActiveView()
 const toast = useToast()
 
+const searchInputRef = ref<{ $el?: HTMLElement }>()
+defineShortcuts({
+  meta_f: () => searchInputRef.value?.$el?.querySelector('input')?.focus(),
+})
+
 const hosts = useHosts()
 const groups = useGroups()
 
@@ -66,7 +71,6 @@ const hostState = reactive({
 })
 watch(selectedHostForEdit, (val) => {
   if (val) {
-    selectedGroupForView.value = undefined // eslint-disable-line ts/no-use-before-define
     hostFormVisible.value = true
     hostState.name = (val.name === null ? undefined : val.name) as any
     hostState.host = (val.host === null ? undefined : val.host) as any
@@ -157,7 +161,6 @@ async function onHostSubmit(event: FormSubmitEvent<HostSchema>) {
   }
 }
 
-const selectedGroupForView = ref<typeof groupedHosts.value[number]>()
 const selectedGroupForEdit = ref<typeof groupedHosts.value[number]>()
 const groupFormVisible = ref(false)
 const groupSchema = z.object({
@@ -169,7 +172,6 @@ const groupState = reactive({
 })
 watch(selectedGroupForEdit, (val) => {
   if (val) {
-    selectedGroupForView.value = undefined
     groupFormVisible.value = true
     groupState.name = val.name as any
   }
@@ -202,17 +204,10 @@ async function onGroupSubmit(event: FormSubmitEvent<GroupSchema>) {
   groupFormVisible.value = false
   groupState.name = undefined
 }
-const groupDeletePending = ref(false)
-async function groupDelete() {
-  if (!selectedGroupForEdit.value) return
-  groupDeletePending.value = true
-  await $fetch(`/api/groups/${selectedGroupForEdit.value.id}`, {
-    method: 'DELETE',
-  })
-  hosts.value = hosts.value.map(host => host.groupId !== selectedGroupForEdit.value?.id ? { ...host } : { ...host, groupId: null })
-  groups.value = groups.value.filter(group => group.id !== selectedGroupForEdit.value?.id)
-  groupDeletePending.value = false
-  groupFormVisible.value = false
+async function groupDelete(id: number) {
+  await $fetch(`/api/groups/${id}`, { method: 'DELETE' })
+  hosts.value = hosts.value.map(host => host.groupId !== id ? { ...host } : { ...host, groupId: null })
+  groups.value = groups.value.filter(group => group.id !== id)
 }
 </script>
 
@@ -268,11 +263,11 @@ async function groupDelete() {
       <div class="w-full flex-1 flex flex-col space-y-3 py-3 overflow-hidden">
         <div class="flex flex-row items-center justify-between space-x-2 px-3">
           <UInput
+            ref="searchInputRef"
             v-model="searchKeyword"
             icon="i-heroicons-magnifying-glass-20-solid"
             size="sm"
             color="white"
-            :trailing="false"
             placeholder="Search..."
           />
           <ClientOnly>
@@ -301,21 +296,30 @@ async function groupDelete() {
 
           <div v-if="groupedHosts.length > 0">
             <span v-if="searchKeyword.length === 0 || searchGroupedHostsResult.length > 0" class="inline-block mb-2 text-xs uppercase opacity-50 tracking-wider">Groups</span>
-            <UVerticalNavigation
-              :links="(searchKeyword.length > 0 && searchGroupedHostsResult ? searchGroupedHostsResult : groupedHosts).map((item) => ({
-                label: item.name,
-                click: () => selectedGroupForView = item,
-                hostsCount: item.hosts.length,
-              }))"
+            <!-- hydration mismatch happened on UAccordion component below -->
+            <UAccordion
+              multiple
+              :items="(searchKeyword.length > 0 && searchGroupedHostsResult ? searchGroupedHostsResult : groupedHosts).map((item) => ({ id: item.id, label: item.name, hosts: item.hosts }))"
+              :ui="{
+                item: { padding: 'pt-0 pb-0 mb-2.5 mt-1 ml-2.5 rounded-md bg-gray-200/25 dark:bg-gray-800/25 border border-gray-200/50 dark:border-gray-800/50' },
+              }"
             >
-              <template #badge="{ link }">
-                <div class="flex-1 flex flex-row justify-end">
-                  <p class="text-sm text-gray-400 dark:text-gray-500">
-                    {{ link.hostsCount }}
-                  </p>
-                </div>
+              <template #default="{ item, open }">
+                <GroupAccordionTrigger
+                  :open="open"
+                  @edit="selectedGroupForEdit = groupedHosts.find(group => group.id === item.id)"
+                  @delete="groupDelete(item.id)"
+                >
+                  {{ item.label }}
+                </GroupAccordionTrigger>
               </template>
-            </UVerticalNavigation>
+              <template #item="{ item }">
+                <template v-if="item.hosts.length === 0">
+                  <span class="inline-block pl-2.5 text-xs opacity-50 py-1">This group is empty</span>
+                </template>
+                <HostList :hosts="item.hosts" @click-edit="(host) => selectedHostForEdit = host" />
+              </template>
+            </UAccordion>
           </div>
 
           <div v-if="hosts.length > 0">
@@ -345,7 +349,7 @@ async function groupDelete() {
 
         <UForm ref="hostForm" :schema="hostSchema" :state="hostState" class="space-y-4" @submit="onHostSubmit">
           <UFormGroup label="Name" name="name">
-            <UInput v-model="hostState.name" />
+            <UInput v-model="hostState.name" autofocus />
           </UFormGroup>
 
           <UFormGroup label="Group" name="groupId">
@@ -392,7 +396,7 @@ async function groupDelete() {
               Cancel
             </UButton>
             <UButton type="submit" variant="soft" size="lg">
-              Submit
+              Save
             </UButton>
           </div>
         </UForm>
@@ -418,88 +422,21 @@ async function groupDelete() {
 
         <UForm :schema="groupSchema" :state="groupState" class="space-y-4" @submit="onGroupSubmit">
           <UFormGroup label="Name" name="name">
-            <UInput v-model="groupState.name" />
+            <UInput v-model="groupState.name" autofocus />
           </UFormGroup>
 
           <div class="flex flex-row justify-between space-x-2 pt-4">
-            <UPopover v-if="selectedGroupForEdit" :popper="{ arrow: true, placement: 'bottom-start' }">
-              <UButton
-                type="button"
-                variant="soft" color="red" size="lg"
-                :loading="groupDeletePending"
-              >
-                Delete
-              </UButton>
-              <template #panel="{ close }">
-                <div class="p-4 flex flex-row items-center space-x-2">
-                  <span class="text-sm opacity-80">Are you sure?</span>
-                  <div class="flex flex-row items-center space-x-1">
-                    <UButton
-                      size="sm"
-                      variant="link"
-                      color="red"
-                      label="Yes"
-                      tabindex="0"
-                      :padded="false"
-                      @click="() => {
-                        close()
-                        groupDelete()
-                      }"
-                    />
-                    <span class="text-sm opacity-80">/</span>
-                    <UButton size="sm" variant="link" color="gray" label="No" tabindex="0" :padded="false" @click="close" />
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-            <div v-else />
+            <div />
             <div class="flex flex-row justify-end space-x-2">
               <UButton type="button" variant="ghost" color="gray" size="lg" @click="groupFormVisible = false">
                 Cancel
               </UButton>
               <UButton type="submit" variant="soft" size="lg" :loading="groupFormPending">
-                Submit
+                Save
               </UButton>
             </div>
           </div>
         </UForm>
-      </UCard>
-    </USlideover>
-
-    <USlideover :model-value="selectedGroupForView !== undefined" side="left" prevent-close>
-      <UCard class="flex flex-col flex-1" :ui="{ body: { base: 'flex-1 overflow-y-auto' }, ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex flex-row items-center space-x-2">
-              <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                {{ selectedGroupForView?.name }}
-              </h3>
-              <UButton
-                color="gray"
-                variant="link"
-                icon="i-heroicons-pencil-square"
-                @click="selectedGroupForEdit = selectedGroupForView"
-              />
-            </div>
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-heroicons-x-mark-20-solid"
-              class="-my-1 bg-gray-50/80 dark:bg-gray-800/80"
-              @click="selectedGroupForView = undefined"
-            />
-          </div>
-        </template>
-
-        <template v-if="selectedGroupForView">
-          <template v-if="selectedGroupForView.hosts.length > 0">
-            <span class="inline-block mb-2 text-xs uppercase opacity-50 tracking-wider">Hosts</span>
-            <HostList :hosts="selectedGroupForView.hosts" @click-edit="(host) => selectedHostForEdit = host" />
-          </template>
-          <p v-else class="text-sm text-gray-400 dark:text-gray-500">
-            This group is empty
-          </p>
-        </template>
       </UCard>
     </USlideover>
   </div>

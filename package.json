@@ -39,6 +39,8 @@
     "@types/ssh2": "^1.11.18",
     "@types/sshpk": "^1.17.4",
     "@types/utf8": "^3.0.3",
+    "@vueuse/core": "^10.7.1",
+    "@vueuse/nuxt": "^10.7.1",
     "@xterm/addon-fit": "0.9.0-beta.1",
     "@xterm/addon-web-links": "0.10.0-beta.1",
     "@xterm/addon-webgl": "0.17.0-beta.1",

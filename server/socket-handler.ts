@@ -32,7 +32,7 @@ export async function socketHandler(io: Server) {
                 socket.on(`${connectionId}:${sessionId}`, data => stream.write(data))
                 socket.on(`${connectionId}:${sessionId}:close`, () => stream.close())
                 stream.on('data', (d: any) => socket.emit(`${connectionId}:${sessionId}`, utf8.decode(d.toString('binary'))))
-                stream.on('close', () => socket.emit(`${connectionId}:${sessionId}`, '\rsession ended.\r\n'))
+                stream.on('close', () => socket.emit(`${connectionId}:${sessionId}`, '\r\nSession ended.\r\n'))
               })
             })
 

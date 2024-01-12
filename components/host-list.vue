@@ -69,8 +69,9 @@ function toggleHostConnection(hostId: number) {
 
 async function onHostClick(host: typeof hosts.value[number]) {
   let connection = connections.value.find(connection => connection.hostId === host.id)
-  if (!connection) connection = await toggleHostConnection(host.id)
+  if (connection && connection.pending) return
 
+  if (!connection) connection = await toggleHostConnection(host.id)
   if (activeView.value === 'terminal') {
     const createId = () => `${new Date().valueOf()}`
     const terminalTab = { id: createId(), label: host.name, active: true }
@@ -82,30 +83,44 @@ async function onHostClick(host: typeof hosts.value[number]) {
     })
   }
 }
+
+function isConnected(id: number) {
+  return connections.value.find(connection => connection.hostId === id) && !connections.value.find(connection => connection.hostId === id)?.pending
+}
+function isPending(id: number) {
+  return connections.value.find(connection => connection.hostId === id)?.pending
+}
 </script>
 
 <template>
   <UVerticalNavigation
-    :links="props.hosts.map((link) => ({
-      label: link.name,
-      id: link.id,
-      starred: link.starred,
-      connected: connections.find(connection => connection.hostId === link.id) && !connections.find(connection => connection.hostId === link.id)?.pending,
-      pending: connections.find(connection => connection.hostId === link.id)?.pending,
-      click: () => onHostClick(link),
+    :links="props.hosts.map((host) => ({
+      ...host,
+      label: host.name,
+      click: () => onHostClick(host),
     }))"
+    :ui="{ padding: 'pl-0 py-0' }"
   >
-    <template #default="{ link }">
-      <span class="truncate relative" :class="link.connected ? 'text-primary' : ''">
-        {{ link.label }}
-      </span>
+    <template #default="{ link: host }">
+      <HostListItemLabel
+        :connected="isConnected(host.id)"
+        :connection-pending="isPending(host.id)"
+        @toggle-connection="toggleHostConnection(host.id)"
+        @edit="() => {
+          const host = hosts.find((host) => host.id === host.id)
+          if (host) $emit('clickEdit', host)
+        }"
+        @delete="() => {}"
+      >
+        {{ host.label }}
+      </HostListItemLabel>
     </template>
-    <template #badge="{ link }">
+    <template #badge="{ link: host }">
       <ClientOnly>
-        <div class="flex-1 flex flex-row justify-end space-x-1 opacity-0 group-hover:opacity-75 -mr-1">
-          <UTooltip text="Edit Host" :popper="{ arrow: true }">
+        <div class="flex-1 flex flex-row justify-end space-x-1 opacity-0 group-hover:opacity-75 focus-within:opacity-75 -mr-1">
+          <UTooltip :text="host.starred ? 'Remove from Starred' : 'Add to Starred'" :popper="{ arrow: true }">
             <UButton
-              icon="i-heroicons-pencil-square"
+              :icon="host.starred ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
               variant="link"
               color="gray"
               size="xs"
@@ -113,37 +128,7 @@ async function onHostClick(host: typeof hosts.value[number]) {
               @click="(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                const host = hosts.find((host) => host.id === link.id)
-                if (host) $emit('clickEdit', host)
-              }"
-            />
-          </UTooltip>
-          <UTooltip :text="link.connected ? 'Disconnect' : 'Connect'" :popper="{ arrow: true }">
-            <UButton
-              :icon="link.connected ? 'i-heroicons-signal-slash' : 'i-heroicons-signal'"
-              variant="link"
-              color="gray"
-              size="xs"
-              :padded="false"
-              :loading="link.pending"
-              @click="(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                toggleHostConnection(link.id)
-              }"
-            />
-          </UTooltip>
-          <UTooltip :text="link.starred ? 'Remove from Starred' : 'Add to Starred'" :popper="{ arrow: true }">
-            <UButton
-              :icon="link.starred ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
-              variant="link"
-              color="gray"
-              size="xs"
-              :padded="false"
-              @click="(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                toggleHostStar(link.id)
+                toggleHostStar(host.id)
               }"
             />
           </UTooltip>
