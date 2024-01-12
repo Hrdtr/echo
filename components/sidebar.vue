@@ -353,7 +353,13 @@ async function deleteGroup(id: number) {
           </UFormGroup>
 
           <UFormGroup label="Group" name="groupId">
-            <USelectMenu
+            <!--
+              Enabling searchable makes build output throws:
+              RangeError: Maximum call stack size exceeded
+              TypeError: Cannot read properties of null (reading 'value')
+              TypeError: Cannot destructure property 'bum' of 'k' as it is null.
+            -->
+            <!-- <USelectMenu
               v-model="hostState.groupId"
               searchable
               searchable-placeholder="Search by name or color"
@@ -363,7 +369,19 @@ async function deleteGroup(id: number) {
               :search-attributes="['name']"
             >
               <template #label>
-                <span v-if="hostState.groupId" class="truncate">{{ groups.find(group => group.id === hostState.groupId as any)?.name }}</span>
+                <span v-if="hostState.groupId" class="truncate">{{ groups.find(group => group.id === hostState.groupId as any)?.name || '-' }}</span>
+              </template>
+            </USelectMenu> -->
+
+            <USelectMenu
+              v-model="hostState.groupId"
+              value-attribute="id"
+              option-attribute="name"
+              :options="[{ id: null, name: '-' }, ...(groups ?? [])]"
+              :search-attributes="['name']"
+            >
+              <template #label>
+                <span v-if="hostState.groupId" class="truncate">{{ groups.find(group => group.id === hostState.groupId as any)?.name || '-' }}</span>
               </template>
             </USelectMenu>
           </UFormGroup>
