@@ -204,7 +204,7 @@ async function onGroupSubmit(event: FormSubmitEvent<GroupSchema>) {
   groupFormVisible.value = false
   groupState.name = undefined
 }
-async function groupDelete(id: number) {
+async function deleteGroup(id: number) {
   await $fetch(`/api/groups/${id}`, { method: 'DELETE' })
   hosts.value = hosts.value.map(host => host.groupId !== id ? { ...host } : { ...host, groupId: null })
   groups.value = groups.value.filter(group => group.id !== id)
@@ -291,7 +291,7 @@ async function groupDelete(id: number) {
         <div class="flex-1 flex flex-col space-y-3 overflow-y-auto px-3">
           <div v-if="searchKeyword.length === 0 && starredHosts.length > 0">
             <span class="inline-block mb-2 text-xs uppercase opacity-50 tracking-wider">Starred</span>
-            <HostList :hosts="starredHosts" @click-edit="(host) => selectedHostForEdit = host" />
+            <HostList :hosts="starredHosts" @edit="(id) => selectedHostForEdit = hosts.find(i => i.id === id)" />
           </div>
 
           <div v-if="groupedHosts.length > 0">
@@ -308,7 +308,7 @@ async function groupDelete(id: number) {
                 <GroupAccordionTrigger
                   :open="open"
                   @edit="selectedGroupForEdit = groupedHosts.find(group => group.id === item.id)"
-                  @delete="groupDelete(item.id)"
+                  @delete="deleteGroup(item.id)"
                 >
                   {{ item.label }}
                 </GroupAccordionTrigger>
@@ -317,14 +317,14 @@ async function groupDelete(id: number) {
                 <template v-if="item.hosts.length === 0">
                   <span class="inline-block pl-2.5 text-xs opacity-50 py-1">This group is empty</span>
                 </template>
-                <HostList :hosts="item.hosts" @click-edit="(host) => selectedHostForEdit = host" />
+                <HostList :hosts="item.hosts" @edit="(id) => selectedHostForEdit = hosts.find(i => i.id === id)" />
               </template>
             </UAccordion>
           </div>
 
           <div v-if="hosts.length > 0">
             <span v-if="searchKeyword.length === 0 || searchHostsResult.length > 0" class="inline-block mb-2 text-xs uppercase opacity-50 tracking-wider">Hosts</span>
-            <HostList :hosts="searchKeyword.length > 0 && searchHostsResult ? searchHostsResult : hosts" @click-edit="(host) => selectedHostForEdit = host" />
+            <HostList :hosts="searchKeyword.length > 0 && searchHostsResult ? searchHostsResult : hosts" @edit="(id) => selectedHostForEdit = hosts.find(i => i.id === id)" />
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ const props = defineProps<{
   hosts: typeof hosts.value
 }>()
 defineEmits<{
-  'clickEdit': [host: typeof hosts.value[number]]
+  'edit': [id: number]
 }>()
 
 const activeView = useActiveView()
@@ -90,15 +90,17 @@ function isConnected(id: number) {
 function isPending(id: number) {
   return connections.value.find(connection => connection.hostId === id)?.pending
 }
+
+async function deleteHost(id: number) {
+  if (isConnected(id)) await toggleHostConnection(id)
+  await $fetch(`/api/hosts/${id}`, { method: 'DELETE' })
+  hosts.value = hosts.value.filter(host => host.id !== id)
+}
 </script>
 
 <template>
   <UVerticalNavigation
-    :links="props.hosts.map((host) => ({
-      ...host,
-      label: host.name,
-      click: () => onHostClick(host),
-    }))"
+    :links="props.hosts.map((host) => ({ ...host, label: host.name, click: () => onHostClick(host) }))"
     :ui="{ padding: 'pl-0 py-0' }"
   >
     <template #default="{ link: host }">
@@ -106,11 +108,8 @@ function isPending(id: number) {
         :connected="isConnected(host.id)"
         :connection-pending="isPending(host.id)"
         @toggle-connection="toggleHostConnection(host.id)"
-        @edit="() => {
-          const host = hosts.find((host) => host.id === host.id)
-          if (host) $emit('clickEdit', host)
-        }"
-        @delete="() => {}"
+        @edit="$emit('edit', host.id)"
+        @delete="deleteHost(host.id)"
       >
         {{ host.label }}
       </HostListItemLabel>
