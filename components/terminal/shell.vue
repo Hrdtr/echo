@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="container" class="flex-1 bg-black p-3" />
+  <div ref="container" class="flex-1" />
 </template>
 
 <style src="xterm/css/xterm.css" />

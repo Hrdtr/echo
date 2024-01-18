@@ -1,40 +1,43 @@
 <script setup lang="ts">
 const mobileSidebarVisible = useState('mobile-sidebar-visible', () => false)
 const activeView = useActiveView()
+
+const sideMenuComponent = computed(() => {
+  switch (activeView.value) {
+    case 'settings':
+      return resolveComponent('SettingsSideMenu')
+    default:
+      return resolveComponent('SideMenu')
+  }
+})
+const viewComponent = computed(() => {
+  switch (activeView.value) {
+    case 'settings':
+      return resolveComponent('SettingsView')
+    case 'terminal':
+      return resolveComponent('TerminalView')
+    default:
+      return null
+  }
+})
 </script>
 
 <template>
-  <div class="w-screen h-dvh flex flex-col overflow-hidden">
+  <div class="w-full min-h-dvh flex flex-col">
     <Sidebar />
 
-    <!-- sidebar overlay -->
-    <div
-      v-if="mobileSidebarVisible"
-      class="z-[9] w-screen h-dvh fixed inset-0 md:hidden"
-      @click="mobileSidebarVisible = false"
-    />
+    <KeepAlive>
+      <component :is="sideMenuComponent" />
+    </KeepAlive>
 
-    <div
-      class="flex-1 flex flex-col transition-all duration-300 ml-0 md:ml-64 lg:ml-72 bg-gray-100 dark:bg-gray-900"
-      :class="mobileSidebarVisible ? 'scale-95' : ''"
-    >
-      <!-- small screen topbar  -->
-      <div class="w-full flex md:hidden px-4 py-2 items-center justify-between border-b border-gray-200/50 dark:border-gray-800/50">
-        <UButton
-          square
-          variant="link"
-          color="gray"
-          size="xl"
-          :padded="false"
-          icon="i-heroicons-bars-3"
-          class="-ml-0.5"
-          @click="mobileSidebarVisible = true"
-        />
-      </div>
+    <!-- sidebar overlay -->
+    <div v-if="mobileSidebarVisible" class="z-[19] w-screen h-dvh fixed inset-0 md:hidden" @click="mobileSidebarVisible = false" />
+
+    <div class="flex-1 min-h-dvh flex flex-col pl-0 md:pl-64 lg:pl-72">
       <!-- main content -->
-      <div class="w-full h-full flex-1 flex-col" :class="activeView === 'terminal' ? 'flex' : 'hidden'">
-        <TerminalView />
-      </div>
+      <KeepAlive>
+        <component :is="viewComponent" />
+      </KeepAlive>
     </div>
 
     <UNotifications />
