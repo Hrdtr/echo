@@ -6,7 +6,7 @@ export default defineNuxtPlugin(async () => {
       const [electron, path] = await Promise.all([import('electron'), import('node:path')])
       databasePath = path.join(electron.app.getPath('userData'), 'app.db')
       migrationsFolder = path.join(electron.app.getAppPath(), 'db/migrations')
-      import('electron-updater').then(({ autoUpdater }) => {
+      import('electron-updater').then(({ default: { autoUpdater } }) => {
         autoUpdater.checkForUpdatesAndNotify()
       })
     }
