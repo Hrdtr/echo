@@ -23,7 +23,7 @@ const viewComponent = computed(() => {
 </script>
 
 <template>
-  <div class="w-full min-h-dvh flex flex-col">
+  <div class="w-full min-h-dvh flex flex-col overflow-x-hidden">
     <Sidebar />
 
     <KeepAlive>
