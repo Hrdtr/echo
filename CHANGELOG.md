@@ -1,6 +1,27 @@
 # Changelog
 
 
+## v1.0.0-alpha.4
+
+[compare changes](https://github.com/Hrdtr/echo/compare/v1.0.0-alpha.3...v1.0.0-alpha.4)
+
+### 🚀 Enhancements
+
+- Ssh key pair generator & settings view ([f4408b9](https://github.com/Hrdtr/echo/commit/f4408b9))
+
+### 🩹 Fixes
+
+- Auto-updater package import ([671a843](https://github.com/Hrdtr/echo/commit/671a843))
+- Slideover form card body scroll ([d53d879](https://github.com/Hrdtr/echo/commit/d53d879))
+
+### 🏡 Chore
+
+- Deps update ([eb89e70](https://github.com/Hrdtr/echo/commit/eb89e70))
+
+### ❤️ Contributors
+
+- Herdi Tr <iam@icm.hrdtr.dev>
+
 ## v1.0.0-alpha.3
 
 [compare changes](https://github.com/Hrdtr/echo/compare/v1.0.0-alpha.2...v1.0.0-alpha.3)
